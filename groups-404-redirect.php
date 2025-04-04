@@ -408,5 +408,33 @@ class Groups_404_Redirect {
 		}
 		return in_array( 'groups/groups.php', $active_plugins );
 	}
+
+	/**
+	 * Checks if the Groups plugin is there and the uploads directory could be created.
+	 *
+	 * @param boolean $disable (optional) If true, disables the plugin if the dependencies are not met. Default: false.
+	 *
+	 * @return true on success
+	 */
+	public static function check_dependencies( $disable = false ) {
+		$result = true;
+		$active_plugins = get_option( 'active_plugins', array() );
+		if ( is_multisite() ) {
+			$active_sitewide_plugins = get_site_option( 'active_sitewide_plugins', array() );
+			$active_sitewide_plugins = array_keys( $active_sitewide_plugins );
+			$active_plugins = array_merge( $active_plugins, $active_sitewide_plugins );
+		}
+		if ( !( $groups_is_active = in_array( 'groups/groups.php', $active_plugins ) ) ) {
+			self::$admin_messages[] = "<div class='error'>" . sprintf( __( '<strong>Groups 404 Redirect</strong> plugin requires the <a href="https://www.itthinx.com/plugins/groups/" target="_blank">Groups</a> plugin. Please install and activate it.', GROUPS_404_REDIRECT_PLUGIN_DOMAIN ) ) . "</div>";
+		}
+		if ( !$groups_is_active ) {
+			if ( $disable ) {
+				include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+				deactivate_plugins( array( __FILE__ ) );
+			}
+			$result = false;
+		}
+		return $result;
+	}
 }
 Groups_404_Redirect::init();
